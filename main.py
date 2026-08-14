@@ -2,38 +2,53 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
 
+from magnetsimulation.motion import get_magnet_position
 import magnetsimulation.plotting as plotting
 import magnetsimulation.motion as motion
 import magnetsimulation.physics as physics
 
-magnet_position = [[0.,0.]]
-m = np.array([[0.,1.]])
+max_distance = 5 # [m]
+resolution = 25 # points per dimension
+X,Y,Z = plotting.setup_grid(max_distance, resolution)
+rr_grid = np.stack([X, Y, Z], axis=-1)
+print(rr_grid.shape)
 
-ux, uy = plotting.setup_grid(5, 30)
-grid_points = np.column_stack([ux.ravel(), uy.ravel()])
+mu_0 = 4 * np.pi * 10**-7
+eps_0 = 8.854e-12
+v_x = 0.5
 
-B_flat = physics.compute_b_field(grid_points, magnet_position, m, 0.2)
-Bx = B_flat[:,0].reshape(ux.shape)
-By = B_flat[:,1].reshape(uy.shape)
-B_mag = np.sqrt(Bx**2 + By**2)
+t_snapshot = 1.025
+dt_num = 0.005
 
-with np.errstate(divide="ignore", invalid="ignore"):
-    Bx_normalized = Bx / B_mag
-    By_normalized = By / B_mag
+B_current, dB_dt, E_current = physics.get_field_at_time(t=t_snapshot, grid=rr_grid, r_grid=rr_grid)
+B_mag = np.linalg.norm(B_current, axis=-1, keepdims=True)
+B_norm = B_current / B_mag
+B_x = B_norm[:, :, 0]
+B_y = B_norm[:, :, 1]
+B_z = B_norm[:, :, 2]
 
-# Replace any NaNs resulting from division by zero back to NaN for matplotlib
-Bx_normalized = np.nan_to_num(Bx_normalized)
-By_normalized = np.nan_to_num(By_normalized)
-# If you want the mask holes back:
-Bx_normalized[np.isnan(Bx)] = np.nan
-By_normalized[np.isnan(By)] = np.nan
+E_mag = np.linalg.norm(E_current, axis=-1, keepdims=True)
+E_norm = E_current / E_mag
+E_x = E_norm[:, :, 0]
+E_y = E_norm[:, :, 1]
+E_z = E_norm[:, :, 2]
+print(E_mag[0:20])
+fig, axes = plt.subplots(1, 2)
+q1 = axes[0].quiver(X, Z, B_x, B_z, B_mag, scale=3, scale_units='inches', norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
+axes[0].set_title(f'Magnetic Field $\mathbf{{B}}$ Quiver (t = {t_snapshot}s)')
+axes[0].set_xlabel('X Position (m)')
+axes[0].set_ylabel('Z Position (m)')
+axes[0].set_aspect('equal')
+fig.colorbar(q1, ax=axes[0], label='|B| Magnitude')
+axes[0].legend()
 
-plt.figure()
 
-plt.quiver(ux, uy, Bx_normalized, By_normalized, B_mag, cmap="viridis", angles="xy", scale_units="xy", scale=2.5,
-           norm=colors.LogNorm(vmin=1e-10, vmax=1e-7))
-plt.title("Magnetic Field Vector Plot")
-plt.colorbar(label="Magnetic Field Magnitude")
-plt.grid(True)
-plt.axis("equal")
+q1 = axes[1].quiver(X, Z, E_x, E_y, E_mag, scale=3, scale_units='inches', norm=colors.LogNorm(vmin=1e-20, vmax=1e-17))
+axes[1].set_title(f'Electric Field $\mathbf{{E}}$ Quiver (t = {t_snapshot}s)')
+axes[1].set_xlabel('X Position (m)')
+axes[1].set_ylabel('Z Position (m)')
+axes[1].set_aspect('equal')
+fig.colorbar(q1, ax=axes[1], label='|E| Magnitude')
+axes[1].legend()
+
 plt.show()
