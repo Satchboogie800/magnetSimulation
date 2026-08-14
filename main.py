@@ -35,7 +35,7 @@ E_z = E_norm[:, :, 2]
 print(E_mag[0:20])
 fig, axes = plt.subplots(1, 2)
 q1 = axes[0].quiver(X, Z, B_x, B_z, B_mag, scale=3, scale_units='inches', norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
-axes[0].set_title(f'Magnetic Field $\mathbf{{B}}$ Quiver (t = {t_snapshot}s)')
+axes[0].set_title(f'Magnetic Field $\mathbf{{B}}$ Quiver (t = {t_snapshot}s, y=1m)')
 axes[0].set_xlabel('X Position (m)')
 axes[0].set_ylabel('Z Position (m)')
 axes[0].set_aspect('equal')
@@ -44,7 +44,7 @@ axes[0].legend()
 
 
 q1 = axes[1].quiver(X, Z, E_x, E_y, E_mag, scale=3, scale_units='inches', norm=colors.LogNorm(vmin=1e-20, vmax=1e-17))
-axes[1].set_title(f'Electric Field $\mathbf{{E}}$ Quiver (t = {t_snapshot}s)')
+axes[1].set_title(f'Electric Field $\mathbf{{E}}$ Quiver (t = {t_snapshot}s, y=1m)')
 axes[1].set_xlabel('X Position (m)')
 axes[1].set_ylabel('Z Position (m)')
 axes[1].set_aspect('equal')
